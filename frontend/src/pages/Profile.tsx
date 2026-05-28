@@ -33,6 +33,22 @@ export default function Profile() {
               {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
             </p>
           </div>
+          <div>
+            <label className="text-sm font-medium text-gray-500">User ID (share to be followed)</label>
+            <div className="flex items-center space-x-2">
+              <code className="text-sm bg-gray-100 px-2 py-1 rounded break-all">{user?.id}</code>
+              <button
+                onClick={() => {
+                  if (user?.id) {
+                    navigator.clipboard.writeText(user.id)
+                  }
+                }}
+                className="text-sm text-primary-600 hover:underline"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
