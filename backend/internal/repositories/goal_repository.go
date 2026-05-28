@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 	"database/sql"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/yourusername/10000hr/internal/models"
