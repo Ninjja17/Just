@@ -1,0 +1,49 @@
+Frontend Plan (functional UI first)
+
+Goal: Make all existing frontend pages and buttons fully functional against the current API.
+
+Phase 1: Core CRUD UI
+1) Skills
+   - List skills with basic fields
+   - Create skill modal/form
+   - Edit skill modal/form
+   - Delete skill action with confirm
+   - Empty/loading/error states
+2) Sessions
+   - List sessions (default: all sessions)
+   - Create session (manual entry)
+   - Edit session
+   - Delete session
+   - Start/stop timer actions
+   - Optional filter by skill
+3) Goals
+   - List goals
+   - Create goal
+   - Edit goal
+   - Delete goal
+   - Empty/loading/error states
+
+Phase 2: Analytics and Social
+4) Analytics
+   - Overview cards (total skills/hours/progress)
+   - Trends + predictions charts using Recharts
+5) Social
+   - Profile lookup
+   - Follow/unfollow
+   - Followers/following lists
+   - Leaderboard
+   - Feed
+
+Phase 3: UX polish and navigation
+6) Auth flow UX
+   - Friendly error messages
+   - OTP verify flow
+7) Consistency
+   - Shared form components
+   - Button states, spinners
+   - Toast success/failure patterns
+8) Verify navigation
+   - All sidebar links live
+   - Each button calls a real API
+
+Next after frontend: Separate admin app (per your choice) for user/data management and analytics.
