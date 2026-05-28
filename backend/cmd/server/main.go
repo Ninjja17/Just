@@ -47,9 +47,19 @@ func main() {
 	goalRepo := repositories.NewGoalRepository(db)
 	followerRepo := repositories.NewFollowerRepository(db)
 	notificationRepo := repositories.NewNotificationRepository(db)
+	adminRepo := repositories.NewAdminRepository(db)
+	adminReportRepo := repositories.NewAdminReportRepository(db)
 
 	// Initialize services
 	authService := services.NewAuthService(userRepo, otpRepo)
+	adminAuthService := services.NewAdminAuthService(adminRepo)
+
+	// Bootstrap admin schema + default account if none exists
+	bootstrapCtx, bootstrapCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	if err := adminAuthService.EnsureBootstrapAdmin(bootstrapCtx); err != nil {
+		log.Printf("admin bootstrap warning: %v", err)
+	}
+	bootstrapCancel()
 	skillService := services.NewSkillService(skillRepo)
 	sessionService := services.NewSessionService(sessionRepo)
 	goalService := services.NewGoalService(goalRepo)
@@ -65,6 +75,7 @@ func main() {
 	socialHandler := handlers.NewSocialHandler(socialService)
 	notificationHandler := handlers.NewNotificationHandler(notificationService)
 	analyticsHandler := handlers.NewAnalyticsHandler(analyticsService)
+	adminHandler := handlers.NewAdminHandler(adminAuthService, adminReportRepo)
 
 	// Setup router
 	router := setupRouter(
@@ -75,6 +86,7 @@ func main() {
 		socialHandler,
 		notificationHandler,
 		analyticsHandler,
+		adminHandler,
 	)
 
 	// Start server
@@ -171,6 +183,7 @@ func setupRouter(
 	socialHandler *handlers.SocialHandler,
 	notificationHandler *handlers.NotificationHandler,
 	analyticsHandler *handlers.AnalyticsHandler,
+	adminHandler *handlers.AdminHandler,
 ) *gin.Engine {
 	router := gin.Default()
 
@@ -247,6 +260,30 @@ func setupRouter(
 			protected.GET("/notifications", notificationHandler.GetNotifications)
 			protected.PUT("/notifications/:id/read", notificationHandler.MarkAsRead)
 			protected.DELETE("/notifications/:id", notificationHandler.DeleteNotification)
+		}
+
+		// Admin routes (separate auth + RBAC)
+		admin := api.Group("/admin")
+		{
+			admin.POST("/login", adminHandler.Login)
+
+			protectedAdmin := admin.Group("")
+			protectedAdmin.Use(middleware.AdminAuthMiddleware())
+			{
+				protectedAdmin.GET("/me", adminHandler.Me)
+				protectedAdmin.GET("/stats", adminHandler.Stats)
+				protectedAdmin.GET("/users", adminHandler.ListUsers)
+				protectedAdmin.GET("/users/:id", adminHandler.GetUser)
+				protectedAdmin.GET("/export/users.csv", adminHandler.ExportUsersCSV)
+				protectedAdmin.GET("/export/sessions.csv", adminHandler.ExportSessionsCSV)
+
+				// Superadmin only
+				super := protectedAdmin.Group("")
+				super.Use(middleware.RequireRole("superadmin"))
+				{
+					super.DELETE("/users/:id", adminHandler.DeleteUser)
+				}
+			}
 		}
 	}
 
