@@ -3,8 +3,10 @@ package services
 import (
 	"context"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -151,6 +153,15 @@ func (s *AuthService) SendOTP(ctx context.Context, userID uuid.UUID, userEmail, 
 
 	if err := s.otpRepo.Create(ctx, otp); err != nil {
 		return err
+	}
+
+	// Dev fallback: if SendGrid is not configured, log the OTP to the server
+	// console instead of attempting to send a real email. This lets local
+	// signup/verification work without external services.
+	apiKey := os.Getenv("SENDGRID_API_KEY")
+	if apiKey == "" || strings.HasPrefix(apiKey, "your-") {
+		log.Printf("[DEV OTP] purpose=%s email=%s code=%s (expires in 10m)", purpose, userEmail, code)
+		return nil
 	}
 
 	// Send email
